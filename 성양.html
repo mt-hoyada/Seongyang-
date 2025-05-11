@@ -243,12 +243,10 @@
             appId: "1:1000586137880:web:7984aaae42070bb5dc0e6d",
             measurementId: "G-Y5R0S9SGPD"
         };
-
-        // Firebase 초기화
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 어제 날짜 구하기 (브라우저 로컬 기준, yyyy-mm-dd 문자열)
+        // 어제 날짜 구하기 (yyyy-mm-dd)
         function getYesterdayKSTString() {
             const now = new Date();
             now.setDate(now.getDate() - 1);
@@ -258,92 +256,55 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 오늘 날짜(브라우저 로컬 기준, yyyy-mm-dd)
-        function getTodayKSTString() {
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
+        // 어제 날짜 데이터만 자동 조회
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchYesterdayDispatchData();
+        });
 
-        // 어제 배차 데이터 로드 (date만 where, company는 프론트에서 필터)
-        function loadYesterdayDispatch() {
+        async function fetchYesterdayDispatchData() {
             const yesterday = getYesterdayKSTString();
-            db.collection("배차일보")
-              .where("date", "==", yesterday)
-              .onSnapshot((snapshot) => {
-                  const dispatchList = document.getElementById('dispatchList');
-                  dispatchList.innerHTML = '';
-
-                  if (snapshot.empty) {
-                      dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 배차 내역이 없습니다.</div>';
-                      return;
-                  }
-
-                  // company가 '성양로지스틱스'인 데이터만 필터링 (임시로 전체 표시)
-                  // const filtered = [];
-                  // snapshot.forEach((doc) => {
-                  //     const data = doc.data();
-                  //     if (data.company === "성양로지스틱스") {
-                  //         filtered.push(data);
-                  //     }
-                  // });
-
-                  // if (filtered.length === 0) {
-                  //     dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 성양로지스틱스 배차 내역이 없습니다.</div>';
-                  //     return;
-                  // }
-
-                  // filtered.forEach((data) => {
-                  //     const dispatchItem = createDispatchItem(data);
-                  //     dispatchList.appendChild(dispatchItem);
-                  // });
-
-                  // 전체 데이터 표시
-                  snapshot.forEach((doc) => {
-                      const data = doc.data();
-                      const dispatchItem = createDispatchItem(data);
-                      dispatchList.appendChild(dispatchItem);
-                  });
-              });
+            try {
+                const snapshot = await db.collection("배차일보")
+                    .where("date", ">=", yesterday)
+                    .where("date", "<=", yesterday)
+                    .get();
+                const dispatchData = snapshot.docs.map(doc => doc.data());
+                renderDispatchList(dispatchData);
+            } catch (error) {
+                console.error("어제 데이터 가져오기 실패:", error);
+                document.getElementById('dispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">데이터를 가져오는데 실패했습니다.</div>';
+            }
         }
 
-        // 배차 항목 생성
-        function createDispatchItem(data) {
-            const div = document.createElement('div');
-            div.className = 'dispatch-list-row';
-            div.onclick = () => showDetailModal(data);
-            div.innerHTML = `
-                <div class="dispatch-list-row-content">
-                    <div class="dispatch-list-row-main">
-                        <span class="date">${formatDate(data.date)}</span>
-                        <span>${data.route}</span>
-                    </div>
-                    <div class="dispatch-list-row-sub">
-                        ${data.itemName} - ${data.cargo}
-                    </div>
-                    <div class="dispatch-list-row-bottom">
-                        <span class="car-number">${data.vehicleNumber}</span>
-                        <span class="cargo">${data.driverName}</span>
+        function renderDispatchList(dispatchData) {
+            const list = document.getElementById('dispatchList');
+            if (dispatchData.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 배차 내역이 없습니다.</div>';
+                return;
+            }
+            let html = `<div class="dispatch-list">`;
+            html += dispatchData.map((item, idx) => `
+                <div class="dispatch-list-row" onclick="showDetailModal(${idx})">
+                    <div class="dispatch-list-row-content">
+                        <div class="dispatch-list-row-main">
+                            <span class="date">${item.date || ''}</span>
+                            <span>${item.company || ''}</span>
+                        </div>
+                        <div class="dispatch-list-row-sub">${item.route || ''}</div>
+                        <div class="dispatch-list-row-bottom">
+                            <span class="car-number">${item.vehicleNumber || item.carNumber || item['차량번호'] || ''}</span>
+                            <span class="cargo">${item.cargo || ''}</span>
+                        </div>
                     </div>
                 </div>
-            `;
-            return div;
+            `).join('');
+            html += '</div>';
+            list.innerHTML = html;
+            window._dispatchData = dispatchData;
         }
 
-        // 날짜 포맷팅
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('ko-KR', {
-                month: 'long',
-                day: 'numeric',
-                weekday: 'short'
-            });
-        }
-
-        // 상세 모달 표시
-        function showDetailModal(data) {
+        function showDetailModal(idx) {
+            const data = window._dispatchData[idx];
             const modalBg = document.getElementById('modalBg');
             modalBg.innerHTML = `
                 <div class="modal-bg" onclick="closeModal()">
@@ -352,7 +313,7 @@
                         <div class="modal-title">배차 상세 내역</div>
                         <div class="modal-row"><span class="modal-label">거래처상호</span><span class="modal-value">${data.company || ''}</span></div>
                         <div class="modal-row"><span class="modal-label">날짜</span><span class="modal-value">${data.date || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber || data.carNumber || data['차량번호'] || ''}</span></div>
                         <div class="modal-row"><span class="modal-label">운행구간</span><span class="modal-value">${data.route || ''}</span></div>
                         <div class="modal-row"><span class="modal-label">차종</span><span class="modal-value">${data.cargo || ''}</span></div>
                         <div class="modal-row"><span class="modal-label">연락처</span><span class="modal-value"><a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a></span></div>
@@ -362,7 +323,6 @@
             `;
             modalBg.style.display = '';
         }
-
         function closeModal() {
             document.getElementById('modalBg').style.display = 'none';
         }
