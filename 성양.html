@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>성양로지스틱스 배차 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#43a047">
+    <meta name="description" content="성양로지스틱스 배차 관리 및 조회 앱">
+    <link rel="manifest" href="/화주배차앱/manifest.json">
+    <link rel="apple-touch-icon" href="/화주배차앱/icon-192x192.png">
+    <!-- Firebase SDK 추가 -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .date-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .date-picker {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            height: 44px;
+        }
+        .search-btn {
+            width: 100%;
+            height: 44px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0 10px 0;
+            background: #43a047;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(67,160,71,0.08);
+            transition: background 0.2s;
+        }
+        .search-btn:hover {
+            background: #388e3c;
+        }
+        .dispatch-list {
+            margin-top: 10px;
+        }
+        .dispatch-list-row {
+            border-bottom: 1px solid #eee;
+            padding: 14px 0 10px 0;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: flex-start;
+        }
+        .dispatch-list-row:hover {
+            background: #f5f5f5;
+        }
+        .dispatch-list-row-content {
+            flex: 1;
+        }
+        .dispatch-list-row-checkbox {
+            margin-right: 10px;
+            margin-top: 4px;
+        }
+        .dispatch-list-row-checkbox input {
+            width: 18px;
+            height: 18px;
+        }
+        .dispatch-list-row-main {
+            font-weight: bold;
+            font-size: 16px;
+            color: #222;
+            margin-bottom: 2px;
+            display: flex;
+            gap: 8px;
+        }
+        .dispatch-list-row-main .date {
+            min-width: 90px;
+            color: #388e3c;
+        }
+        .dispatch-list-row-sub {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 2px;
+            word-break: break-all;
+        }
+        .dispatch-list-row-bottom {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            flex-wrap: nowrap;
+            white-space: nowrap;
+        }
+        .dispatch-list-row-bottom .car-number {
+            color: #555;
+            font-size: 13px;
+        }
+        .dispatch-list-row-bottom .cargo {
+            color: #888;
+            font-size: 13px;
+        }
+        .copy-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 38px;
+            margin-left: 8px;
+        }
+        .copy-btn:hover {
+            background: #388e3c;
+        }
+        .copy-btn:active {
+            background: #2e7d32;
+        }
+        .phone-link {
+            color: #2196F3;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .phone-link:hover {
+            text-decoration: underline;
+        }
+        /* 모달 스타일 */
+        .modal-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 10px;
+            max-width: 90vw;
+            width: 350px;
+            padding: 24px 18px 18px 18px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .modal-row {
+            margin-bottom: 8px;
+            font-size: 16px;
+            display: flex;
+        }
+        .modal-label {
+            min-width: 90px;
+            color: #388e3c;
+            font-weight: bold;
+        }
+        .modal-value {
+            color: #222;
+            word-break: break-all;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 14px;
+            font-size: 22px;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .multi-copy-btn {
+            width: 90vw;
+            max-width: 500px;
+            height: 48px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #2196F3;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(33,150,243,0.15);
+            transition: background 0.2s;
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: none;
+        }
+        .multi-copy-btn:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>성양로지스틱스 배차 목록</h1>
+        <div id="dispatchList" class="dispatch-list"></div>
+        <div id="modalBg" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/화주배차앱/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // Firebase 초기화
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6S2dILlwKETij2-X6jlRWasZwIzmvdp8",
+            authDomain: "sw-it-v01.firebaseapp.com",
+            databaseURL: "https://sw-it-v01-default-rtdb.firebaseio.com",
+            projectId: "sw-it-v01",
+            storageBucket: "sw-it-v01.firebasestorage.app",
+            messagingSenderId: "1000586137880",
+            appId: "1:1000586137880:web:7984aaae42070bb5dc0e6d",
+            measurementId: "G-Y5R0S9SGPD"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 어제 날짜 구하기
+        function getYesterday() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return yesterday.toISOString().split('T')[0];
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            loadYesterdayDispatch();
+        });
+
+        // 어제 배차 데이터 로드
+        function loadYesterdayDispatch() {
+            const yesterday = getYesterday();
+            
+            db.collection("배차일보")
+                .where("company", "==", "성양로지스틱스")
+                .where("date", "==", yesterday)
+                .orderBy("date", "desc")
+                .onSnapshot((snapshot) => {
+                    const dispatchList = document.getElementById('dispatchList');
+                    dispatchList.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 배차 내역이 없습니다.</div>';
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const dispatchItem = createDispatchItem(data);
+                        dispatchList.appendChild(dispatchItem);
+                    });
+                });
+        }
+
+        // 배차 항목 생성
+        function createDispatchItem(data) {
+            const div = document.createElement('div');
+            div.className = 'dispatch-list-row';
+            div.onclick = () => showDetailModal(data);
+            div.innerHTML = `
+                <div class="dispatch-list-row-content">
+                    <div class="dispatch-list-row-main">
+                        <span class="date">${formatDate(data.date)}</span>
+                        <span>${data.route}</span>
+                    </div>
+                    <div class="dispatch-list-row-sub">
+                        ${data.itemName} - ${data.cargo}
+                    </div>
+                    <div class="dispatch-list-row-bottom">
+                        <span class="car-number">${data.vehicleNumber}</span>
+                        <span class="cargo">${data.driverName}</span>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        // 날짜 포맷팅
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ko-KR', {
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short'
+            });
+        }
+
+        // 상세 모달 표시
+        function showDetailModal(data) {
+            const modalBg = document.getElementById('modalBg');
+            modalBg.innerHTML = `
+                <div class="modal-bg" onclick="closeModal()">
+                    <div class="modal-box" onclick="event.stopPropagation();">
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                        <div class="modal-title">배차 상세 내역</div>
+                        <div class="modal-row"><span class="modal-label">거래처상호</span><span class="modal-value">${data.company || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">날짜</span><span class="modal-value">${data.date || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">운행구간</span><span class="modal-value">${data.route || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">차종</span><span class="modal-value">${data.cargo || ''}</span></div>
+                        <div class="modal-row"><span class="modal-label">연락처</span><span class="modal-value"><a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a></span></div>
+                        <div class="modal-row"><span class="modal-label">이름</span><span class="modal-value">${data.driverName || ''}</span></div>
+                    </div>
+                </div>
+            `;
+            modalBg.style.display = '';
+        }
+
+        function closeModal() {
+            document.getElementById('modalBg').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
