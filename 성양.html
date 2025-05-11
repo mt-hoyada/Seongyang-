@@ -297,7 +297,7 @@
                         <div class="dispatch-list-row-bottom">
                             <span class="car-number">${item.vehicleNumber || item.carNumber || item['차량번호'] || ''}</span>
                             <span class="cargo">${item.cargo || ''}</span>
-                            <span class="contact">${item.contact || ''}</span>
+                            <a href="tel:${item.contact || ''}" class="contact" onclick="event.stopPropagation();">${item.contact || ''}</a>
                         </div>
                     </div>
                 </div>
