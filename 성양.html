@@ -370,8 +370,8 @@
                 debug.innerText += `\n[4] PapaParse rows: ${parsed.data.length}`;
                 const today = getTodayKSTString();
                 let dateDebug = `[5] 오늘 날짜: ${today}\n`;
-                parsed.data.forEach((row, i) => {
-                    dateDebug += `[row${i}] row['날짜']: "${row['날짜']}"\n`;
+                parsed.data.slice(0, 10).forEach((row, i) => {
+                    dateDebug += `[row${i}] row['날짜']: "${row['날짜']}" | 전체: ${JSON.stringify(row)}\n`;
                 });
                 debug.innerText += dateDebug;
                 // 날짜 비교를 startsWith로 완화
