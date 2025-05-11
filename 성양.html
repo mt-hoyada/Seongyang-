@@ -127,6 +127,40 @@
             color: #2196F3;
             text-decoration: none;
         }
+        @media (max-width: 768px) {
+            .custom-overlay {
+                width: 100%;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: 0;
+                height: 50%;
+                overflow-y: auto;
+            }
+            .card-header {
+                font-size: 16px;
+                padding: 12px;
+            }
+            .dispatch-card {
+                font-size: 14px;
+                padding: 10px;
+            }
+            .dispatch-info {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+            .modal-label {
+                width: 70px;
+                font-size: 13px;
+            }
+            .dispatch-route {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -144,7 +178,6 @@
             </div>
         </div>
     </div>
-
     <div id="modalBg" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -154,43 +187,14 @@
             <div id="modalContent"></div>
         </div>
     </div>
-
-    <!-- Firebase SDK 추가 -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <!-- PapaParse CDN 추가 -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    
     <script>
-        // Service Worker 등록
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        // Firebase 초기화
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6S2dILlwKETij2-X6jlRWasZwIzmvdp8",
-            authDomain: "sw-it-v01.firebaseapp.com",
-            databaseURL: "https://sw-it-v01-default-rtdb.firebaseio.com",
-            projectId: "sw-it-v01",
-            storageBucket: "sw-it-v01.firebasestorage.app",
-            messagingSenderId: "1000586137880",
-            appId: "1:1000586137880:web:7984aaae42070bb5dc0e6d",
-            measurementId: "G-Y5R0S9SGPD"
-        };
+        const firebaseConfig = {/* Firebase 설정 */};
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 날짜 관련 유틸리티 함수들
         function getDateString(date) {
             const yyyy = date.getFullYear();
             const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -208,7 +212,6 @@
             return getDateString(date);
         }
 
-        // 최근 5일 데이터 조회
         async function fetchLastFiveDaysData() {
             try {
                 const fiveDaysAgo = getLastNDaysKSTString(5);
@@ -220,119 +223,72 @@
                 const filtered = dispatchData.filter(item => item.company === '성양로지스틱스');
                 renderDispatchList(filtered, 'dispatchList');
             } catch (error) {
-                console.error("최근 5일 데이터 가져오기 실패:", error);
-                document.getElementById('dispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">최근 5일 배차 내역을 불러오지 못했습니다.</div>';
+                document.getElementById('dispatchList').innerHTML = '<div class="text-center text-muted py-3">최근 5일 배차 내역을 불러오지 못했습니다.</div>';
             }
         }
 
-        // DOMContentLoaded 시점에 실행
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchTodayDispatchData();  // 오늘 데이터 먼저 로드
-            fetchLastFiveDaysData();   // 그 다음 최근 5일 데이터 로드
-        });
-
-        // ====== 구글 시트 정보(한 번만 선언) ======
         const SHEET_ID = '1CrKQ-Baj4rnL8eYuehLLBuFS9Orsm5qlicd9Nq-kxjU';
         const SHEET_NAME = '배차일보';
 
-        // 오늘 내역 fetch 및 표시
         async function fetchTodayDispatchData() {
             try {
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
                 const text = await response.text();
-                
-                // PapaParse를 사용하여 CSV 파싱
-                const parsedData = Papa.parse(text, {
-                    header: false,
-                    skipEmptyLines: true
-                });
-                
-                const rows = parsedData.data.slice(1); // 헤더 제외
+                const parsedData = Papa.parse(text, { header: false, skipEmptyLines: true });
+                const rows = parsedData.data.slice(1);
                 const today = getTodayKSTString();
-                
-                const todayData = rows
-                    .filter(cols => cols[0] && cols[0].trim() === today && cols[1] && cols[1].trim() === "성양로지스틱스") // 오늘 날짜와 성양로지스틱스 데이터만 필터링
+                const todayData = rows.filter(cols => cols[0]?.trim() === today && cols[1]?.trim() === "성양로지스틱스")
                     .map(cols => ({
-                        date: cols[0] ? cols[0].trim() : '-',
-                        company: cols[1] ? cols[1].trim() : '-',
-                        route: cols[3] ? cols[3].trim() : '-',
-                        vehicleNumber: cols[2] ? cols[2].trim() : '-',
-                        cargo: cols[5] ? cols[5].trim() : '-',
-                        contact: cols[8] ? cols[8].trim() : '-',
-                        driverName: cols[11] ? cols[11].trim() : '-'
+                        date: cols[0]?.trim() || '-',
+                        company: cols[1]?.trim() || '-',
+                        route: cols[3]?.trim() || '-',
+                        vehicleNumber: cols[2]?.trim() || '-',
+                        cargo: cols[5]?.trim() || '-',
+                        contact: cols[8]?.trim() || '-',
+                        driverName: cols[11]?.trim() || '-'
                     }));
-                
                 renderTodayDispatchList(todayData);
-                window._todayDispatchData = todayData; // 모달에서 사용하기 위해 데이터 저장
+                window._todayDispatchData = todayData;
             } catch (error) {
-                console.error('구글 시트 데이터 가져오기 실패:', error);
-                document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
+                document.getElementById('todayDispatchList').innerHTML = '<div class="text-center text-muted py-3">오늘 배차 내역을 불러오지 못했습니다.</div>';
             }
+        }
+
+        function renderDispatchList(data, targetId) {
+            const list = document.getElementById(targetId);
+            if (!data?.length) {
+                list.innerHTML = '<div class="text-center text-muted py-3">배차 내역이 없습니다.</div>';
+                return;
+            }
+            list.innerHTML = data.map((item, idx) => `
+                <div class="dispatch-card" onclick="showDetailModal(${idx})">
+                    <div class="dispatch-date">${item.date}</div>
+                    <div class="dispatch-route">${item.route}</div>
+                    <div class="dispatch-info">
+                        <span>${item.vehicleNumber}</span>
+                        <span>${item.cargo}</span>
+                        <a href="tel:${item.contact}" class="phone-link" onclick="event.stopPropagation()">${item.contact}</a>
+                        <span>${item.driverName}</span>
+                    </div>
+                </div>`).join('');
+            window._dispatchData = data;
         }
 
         function renderTodayDispatchList(data) {
-            const list = document.getElementById('todayDispatchList');
-            if (!data || data.length === 0) {
-                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역이 없습니다.</div>';
-                return;
-            }
-            let html = `<div class="dispatch-list">`;
-            html += data.map((item, idx) => `
-                <div class="dispatch-list-row" onclick="showTodayDetailModal(${idx})">
-                    <div class="dispatch-list-row-content">
-                        <div class="dispatch-list-row-main">
-                            <span class="date">${item.date}</span>
-                        </div>
-                        <div class="dispatch-list-row-sub">${item.route}</div>
-                        <div class="dispatch-list-row-bottom">
-                            <span class="car-number">${item.vehicleNumber}</span>
-                            <span class="cargo">${item.cargo}</span>
-                            <a href="tel:${item.contact}" class="phone-link" onclick="event.stopPropagation();">${item.contact}</a>
-                            <span class="driver-name">${item.driverName}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            html += '</div>';
-            list.innerHTML = html;
+            renderDispatchList(data, 'todayDispatchList');
         }
 
-        function showTodayDetailModal(idx) {
-            const data = window._todayDispatchData[idx];
+        function showDetailModal(idx) {
+            const data = window._dispatchData[idx] || window._todayDispatchData[idx];
             const modalContent = document.getElementById('modalContent');
             modalContent.innerHTML = `
-                <div class="modal-row">
-                    <div class="modal-label">거래처</div>
-                    <div class="modal-value">${data.company || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">날짜</div>
-                    <div class="modal-value">${data.date || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">차량번호</div>
-                    <div class="modal-value">${data.vehicleNumber || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">운행구간</div>
-                    <div class="modal-value">${data.route || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">차종</div>
-                    <div class="modal-value">${data.cargo || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">연락처</div>
-                    <div class="modal-value">
-                        <a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a>
-                    </div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">이름</div>
-                    <div class="modal-value">${data.driverName || ''}</div>
-                </div>
-            `;
-            
+                <div class="modal-row"><div class="modal-label">거래처</div><div class="modal-value">${data.company}</div></div>
+                <div class="modal-row"><div class="modal-label">날짜</div><div class="modal-value">${data.date}</div></div>
+                <div class="modal-row"><div class="modal-label">차량번호</div><div class="modal-value">${data.vehicleNumber}</div></div>
+                <div class="modal-row"><div class="modal-label">운행구간</div><div class="modal-value">${data.route}</div></div>
+                <div class="modal-row"><div class="modal-label">차종</div><div class="modal-value">${data.cargo}</div></div>
+                <div class="modal-row"><div class="modal-label">연락처</div><div class="modal-value"><a href="tel:${data.contact}" class="phone-link">${data.contact}</a></div></div>
+                <div class="modal-row"><div class="modal-label">이름</div><div class="modal-value">${data.driverName}</div></div>`;
             const modal = document.getElementById('modalBg');
             modal.style.display = 'block';
             setTimeout(() => modal.classList.add('show'), 10);
@@ -344,76 +300,14 @@
             setTimeout(() => modal.style.display = 'none', 300);
         }
 
-        // 모달 외부 클릭시 닫기
         document.getElementById('modalBg').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
+            if (e.target === this) closeModal();
         });
 
-        function renderDispatchList(data, targetId) {
-            const list = document.getElementById(targetId);
-            if (!data || data.length === 0) {
-                list.innerHTML = '<div class="text-center text-muted py-3">배차 내역이 없습니다.</div>';
-                return;
-            }
-            
-            list.innerHTML = data.map((item, idx) => `
-                <div class="dispatch-card" onclick="showDetailModal(${idx})">
-                    <div class="dispatch-date">${item.date || ''}</div>
-                    <div class="dispatch-route">${item.route || ''}</div>
-                    <div class="dispatch-info">
-                        <span>${item.vehicleNumber || ''}</span>
-                        <span>${item.cargo || ''}</span>
-                        <a href="tel:${item.contact || ''}" class="phone-link" onclick="event.stopPropagation()">${item.contact || ''}</a>
-                        <span>${item.driverName || ''}</span>
-                    </div>
-                </div>
-            `).join('');
-            
-            window._dispatchData = data;
-        }
-
-        function showDetailModal(idx) {
-            const data = window._dispatchData[idx];
-            const modalContent = document.getElementById('modalContent');
-            modalContent.innerHTML = `
-                <div class="modal-row">
-                    <div class="modal-label">거래처</div>
-                    <div class="modal-value">${data.company || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">날짜</div>
-                    <div class="modal-value">${data.date || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">차량번호</div>
-                    <div class="modal-value">${data.vehicleNumber || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">운행구간</div>
-                    <div class="modal-value">${data.route || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">차종</div>
-                    <div class="modal-value">${data.cargo || ''}</div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">연락처</div>
-                    <div class="modal-value">
-                        <a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a>
-                    </div>
-                </div>
-                <div class="modal-row">
-                    <div class="modal-label">이름</div>
-                    <div class="modal-value">${data.driverName || ''}</div>
-                </div>
-            `;
-            
-            const modal = document.getElementById('modalBg');
-            modal.style.display = 'block';
-            setTimeout(() => modal.classList.add('show'), 10);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTodayDispatchData();
+            fetchLastFiveDaysData();
+        });
     </script>
 </body>
 </html>
