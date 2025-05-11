@@ -281,21 +281,28 @@
                       return;
                   }
 
-                  // company가 '성양로지스틱스'인 데이터만 필터링
-                  const filtered = [];
+                  // company가 '성양로지스틱스'인 데이터만 필터링 (임시로 전체 표시)
+                  // const filtered = [];
+                  // snapshot.forEach((doc) => {
+                  //     const data = doc.data();
+                  //     if (data.company === "성양로지스틱스") {
+                  //         filtered.push(data);
+                  //     }
+                  // });
+
+                  // if (filtered.length === 0) {
+                  //     dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 성양로지스틱스 배차 내역이 없습니다.</div>';
+                  //     return;
+                  // }
+
+                  // filtered.forEach((data) => {
+                  //     const dispatchItem = createDispatchItem(data);
+                  //     dispatchList.appendChild(dispatchItem);
+                  // });
+
+                  // 전체 데이터 표시
                   snapshot.forEach((doc) => {
                       const data = doc.data();
-                      if (data.company === "성양로지스틱스") {
-                          filtered.push(data);
-                      }
-                  });
-
-                  if (filtered.length === 0) {
-                      dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 성양로지스틱스 배차 내역이 없습니다.</div>';
-                      return;
-                  }
-
-                  filtered.forEach((data) => {
                       const dispatchItem = createDispatchItem(data);
                       dispatchList.appendChild(dispatchItem);
                   });
