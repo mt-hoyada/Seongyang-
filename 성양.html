@@ -116,6 +116,10 @@
             color: #888;
             font-size: 13px;
         }
+        .dispatch-list-row-bottom .contact {
+            color: #888;
+            font-size: 13px;
+        }
         .copy-btn {
             background: #4CAF50;
             color: white;
@@ -213,7 +217,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>성양로지스틱스 배차 목록</h1>
+        <h1>성우로지스 배차 목록</h1>
         <div id="dispatchList" class="dispatch-list"></div>
         <div id="modalBg" style="display:none;"></div>
     </div>
@@ -288,12 +292,12 @@
                     <div class="dispatch-list-row-content">
                         <div class="dispatch-list-row-main">
                             <span class="date">${item.date || ''}</span>
-                            <span>${item.company || ''}</span>
                         </div>
                         <div class="dispatch-list-row-sub">${item.route || ''}</div>
                         <div class="dispatch-list-row-bottom">
                             <span class="car-number">${item.vehicleNumber || item.carNumber || item['차량번호'] || ''}</span>
                             <span class="cargo">${item.cargo || ''}</span>
+                            <span class="contact">${item.contact || ''}</span>
                         </div>
                     </div>
                 </div>
