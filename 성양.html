@@ -293,7 +293,10 @@
                     .where("date", "<", getTodayKSTString())
                     .get();
                 const dispatchData = snapshot.docs.map(doc => doc.data());
-                const filtered = dispatchData.filter(item => item.company === '성양로지스틱스');
+                const filtered = dispatchData.filter(item => {
+                    const company = item.company || '';
+                    return company.includes('성양로지스틱스');
+                });
                 renderDispatchList(filtered);
             } catch (error) {
                 console.error("최근 5일 데이터 가져오기 실패:", error);
@@ -327,7 +330,11 @@
                 const today = getTodayKSTString();
                 
                 const todayData = rows
-                    .filter(cols => cols[0] && cols[0].trim() === today && cols[1] && cols[1].trim() === "성양로지스틱스") // 오늘 날짜와 성양로지스틱스 데이터만 필터링
+                    .filter(cols => {
+                        const date = cols[0] ? cols[0].trim() : '';
+                        const company = cols[1] ? cols[1].trim() : '';
+                        return date === today && company.includes('성양로지스틱스');
+                    })
                     .map(cols => ({
                         date: cols[0] ? cols[0].trim() : '-',
                         company: cols[1] ? cols[1].trim() : '-',
