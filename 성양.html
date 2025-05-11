@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#43a047">
     <meta name="description" content="성양로지스틱스 배차 관리 및 조회 앱">
-    <link rel="manifest" href="/화주배차앱/manifest.json">
-    <link rel="apple-touch-icon" href="/화주배차앱/icon-192x192.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192x192.png">
     <!-- Firebase SDK 추가 -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -228,7 +228,7 @@
         // Service Worker 등록
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/화주배차앱/service-worker.js')
+                navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
                         console.log('ServiceWorker registration successful');
                     })
@@ -349,15 +349,27 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 오늘 내역 fetch 및 표시
+        // 오늘 내역 fetch 및 표시 (디버깅 메시지 추가)
         async function fetchTodayDispatchData() {
+            const debugDiv = document.getElementById('todayDispatchDebug');
+            if (debugDiv) debugDiv.remove();
+            const debug = document.createElement('div');
+            debug.id = 'todayDispatchDebug';
+            debug.style = 'color:#888; font-size:13px; margin:10px 0; white-space:pre-wrap;';
+            document.getElementById('todayDispatchList').before(debug);
             try {
+                debug.innerText = '[1] fetch 시작';
                 const res = await fetch(SHEET_URL);
+                debug.innerText += '\n[2] fetch 완료, status: ' + res.status;
                 const text = await res.text();
+                debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
                 const rows = text.split('\n').map(row => row.split(','));
+                debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
                 // 첫 행은 헤더, 2행부터 데이터
                 const dataRows = rows.slice(1).filter(r => r.length > 1);
+                debug.innerText += `\n[5] 데이터 행 수(2행~): ${dataRows.length}`;
                 const today = getTodayKSTString();
+                debug.innerText += `\n[6] 오늘 날짜: ${today}`;
                 // A:날짜, B:거래처상호, C:차량번호, D:운송구간, F:차종, I:연락처, L:이름
                 const todayData = dataRows.filter(cols =>
                     (cols[0] || '').trim() === today && (cols[1] || '').trim() === '성양로지스틱스'
@@ -370,9 +382,11 @@
                     contact: (cols[8] || '-').trim(),
                     driverName: (cols[11] || '-').trim()
                 }));
+                debug.innerText += `\n[7] 오늘 성양로지스틱스 데이터 수: ${todayData.length}`;
                 renderTodayDispatchList(todayData);
             } catch (e) {
                 document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
+                debug.innerText += '\n[ERROR] ' + (e.message || e);
             }
         }
 
