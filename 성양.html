@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>성양로지스틱스 배차 목록</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <style>
@@ -10,128 +9,140 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            background: #f5f5f5;
         }
-        .container-fluid {
-            padding: 16px;
-            max-width: 800px;
-            margin: 0 auto;
+        .container-fluid, .map-container {
+            height: 100vh;
+            min-height: 100%;
         }
-        .page-title {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-            color: #333;
-        }
-        .date-range {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .date-input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .search-button {
-            width: 100%;
-            padding: 12px;
-            background: #43a047;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-        .dispatch-list {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .dispatch-item {
-            padding: 16px;
-            border-bottom: 1px solid #eee;
+        .custom-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 16px;
         }
-        .dispatch-item:last-child {
-            border-bottom: none;
+        .dispatch-list {
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+        }
+        .card {
+            margin-bottom: 0;
+            background: white;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dispatch-list-card {
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+        }
+        .map-container {
+            position: relative;
+            background: #f8f9fa;
+        }
+        .dispatch-card {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .dispatch-card:hover {
+            background: #f8f9fa;
         }
         .dispatch-date {
             color: #43a047;
             font-weight: 600;
             font-size: 14px;
+            margin-bottom: 5px;
         }
-        .company-name {
+        .dispatch-route {
+            font-size: 15px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .dispatch-info {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #666;
+        }
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 15px;
             font-weight: 600;
-            font-size: 16px;
-            color: #333;
         }
-        .route-info {
-            font-size: 14px;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .modal-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: none;
+            border: none;
+            font-size: 24px;
             color: #666;
+            cursor: pointer;
         }
-        .car-info {
-            font-size: 14px;
+        .modal-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .modal-label {
+            width: 80px;
             color: #666;
+            font-size: 14px;
         }
-        .phone-number {
+        .modal-value {
+            flex: 1;
+        }
+        .phone-link {
             color: #2196F3;
             text-decoration: none;
-            font-size: 14px;
-        }
-        .copy-button {
-            padding: 4px 12px;
-            background: #43a047;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            align-self: flex-start;
-        }
-        
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding: 12px;
-            }
-            .page-title {
-                font-size: 20px;
-                margin: 16px 0;
-            }
-            .date-range {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .date-input {
-                width: 100%;
-            }
-            .dispatch-item {
-                padding: 12px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <h1 class="page-title">배차 목록</h1>
-        
-        <div class="date-range">
-            <input type="date" class="date-input" id="startDate">
-            <span>~</span>
-            <input type="date" class="date-input" id="endDate">
+    <div class="container-fluid p-0">
+        <div class="map-container">
+            <div class="custom-overlay">
+                <div class="card">
+                    <div class="card-header">오늘 배차 내역</div>
+                    <div class="card-body p-0" id="todayDispatchList"></div>
+                </div>
+                <div class="card dispatch-list-card">
+                    <div class="card-header">최근 5일 배차 내역</div>
+                    <div class="card-body p-0" id="dispatchList"></div>
+                </div>
+            </div>
         </div>
-        
-        <button class="search-button">조회</button>
-        
-        <div class="dispatch-list" id="todayDispatchList"></div>
     </div>
 
     <div id="modalBg" class="modal">
@@ -267,13 +278,19 @@
             }
             let html = `<div class="dispatch-list">`;
             html += data.map((item, idx) => `
-                <div class="dispatch-item">
-                    <div class="dispatch-date">${item.date}</div>
-                    <div class="company-name">${item.company}</div>
-                    <div class="route-info">${item.route}</div>
-                    <div class="car-info">${item.vehicleNumber}</div>
-                    <a href="tel:${item.contact}" class="phone-number">${item.contact}</a>
-                    <button class="copy-button" onclick="copyToClipboard('${item.contact}')">복사</button>
+                <div class="dispatch-list-row" onclick="showTodayDetailModal(${idx})">
+                    <div class="dispatch-list-row-content">
+                        <div class="dispatch-list-row-main">
+                            <span class="date">${item.date}</span>
+                        </div>
+                        <div class="dispatch-list-row-sub">${item.route}</div>
+                        <div class="dispatch-list-row-bottom">
+                            <span class="car-number">${item.vehicleNumber}</span>
+                            <span class="cargo">${item.cargo}</span>
+                            <a href="tel:${item.contact}" class="phone-link" onclick="event.stopPropagation();">${item.contact}</a>
+                            <span class="driver-name">${item.driverName}</span>
+                        </div>
+                    </div>
                 </div>
             `).join('');
             html += '</div>';
@@ -334,18 +351,27 @@
             }
         });
 
-        function renderDispatchList(data, elementId) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = data.map(item => `
-                <div class="dispatch-item">
-                    <div class="dispatch-date">${item.date}</div>
-                    <div class="company-name">${item.company}</div>
-                    <div class="route-info">${item.route}</div>
-                    <div class="car-info">${item.vehicleNumber}</div>
-                    <a href="tel:${item.contact}" class="phone-number">${item.contact}</a>
-                    <button class="copy-button" onclick="copyToClipboard('${item.contact}')">복사</button>
+        function renderDispatchList(data, targetId) {
+            const list = document.getElementById(targetId);
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="text-center text-muted py-3">배차 내역이 없습니다.</div>';
+                return;
+            }
+            
+            list.innerHTML = data.map((item, idx) => `
+                <div class="dispatch-card" onclick="showDetailModal(${idx})">
+                    <div class="dispatch-date">${item.date || ''}</div>
+                    <div class="dispatch-route">${item.route || ''}</div>
+                    <div class="dispatch-info">
+                        <span>${item.vehicleNumber || ''}</span>
+                        <span>${item.cargo || ''}</span>
+                        <a href="tel:${item.contact || ''}" class="phone-link" onclick="event.stopPropagation()">${item.contact || ''}</a>
+                        <span>${item.driverName || ''}</span>
+                    </div>
                 </div>
             `).join('');
+            
+            window._dispatchData = data;
         }
 
         function showDetailModal(idx) {
@@ -387,15 +413,6 @@
             const modal = document.getElementById('modalBg');
             modal.style.display = 'block';
             setTimeout(() => modal.classList.add('show'), 10);
-        }
-
-        // 클립보드 복사 함수
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('전화번호가 복사되었습니다.');
-            }).catch(err => {
-                console.error('클립보드 복사 실패:', err);
-            });
         }
     </script>
 </body>
