@@ -338,11 +338,12 @@
             document.getElementById('modalBg').style.display = 'none';
         }
 
-        // ====== 배차일보 A열 값 전체 출력 ======
+        // ====== 구글 시트 정보(한 번만 선언) ======
         const SHEET_ID = '1CrKQ-Baj4rnL8eYuehLLBuFS9Orsm5qlicd9Nq-kxjU';
         const SHEET_NAME = '배차일보';
-        
-        // A열 값 불러오기 및 출력
+
+        // ====== 배차일보 A열 값 전체 출력 ======
+        // (SHEET_ID, SHEET_NAME 재선언 제거)
         async function fetchSheetAColumnData() {
             const listDiv = document.getElementById('sheetAColumnList');
             listDiv.innerHTML = '<div style="color:#888;">불러오는 중...</div>';
@@ -372,6 +373,73 @@
         // DOMContentLoaded 시점에 실행
         document.addEventListener('DOMContentLoaded', function() {
             fetchSheetAColumnData();
+        });
+
+        // ====== 오늘 내역(구글 시트, 조건 없이 전체 행) ======
+        // (SHEET_ID, SHEET_NAME 재선언 제거)
+        // 오늘 내역 fetch 및 표시 (조건 없이 전체 행)
+        async function fetchTodayDispatchData() {
+            const debugDiv = document.getElementById('todayDispatchDebug');
+            if (debugDiv) debugDiv.remove();
+            const debug = document.createElement('div');
+            debug.id = 'todayDispatchDebug';
+            debug.style = 'color:#888; font-size:13px; margin:10px 0; white-space:pre-wrap;';
+            document.getElementById('todayDispatchList').before(debug);
+            try {
+                debug.innerText = '[1] fetch 시작';
+                const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
+                debug.innerText += '\n[2] fetch 완료, status: ' + response.status;
+                const text = await response.text();
+                debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
+                const lines = text.split('\n');
+                const rows = lines.slice(1).filter(r => r.trim().length > 0).map(row => row.split(','));
+                debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
+                const todayData = rows.map(cols => ({
+                    date: (cols[0] || '-').trim(),
+                    company: (cols[1] || '-').trim(),
+                    vehicleNumber: (cols[2] || '-').trim(),
+                    route: (cols[3] || '-').trim(),
+                    cargo: (cols[5] || '-').trim(),
+                    contact: (cols[8] || '-').trim(),
+                    driverName: (cols[11] || '-').trim()
+                }));
+                debug.innerText += `\n[5] todayData 갯수: ${todayData.length}`;
+                renderTodayDispatchList(todayData);
+            } catch (error) {
+                console.error('구글 시트 데이터 가져오기 실패:', error);
+                debug.innerText += '\n[ERROR] ' + (error.message || error);
+                document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
+            }
+        }
+        function renderTodayDispatchList(data) {
+            const list = document.getElementById('todayDispatchList');
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역이 없습니다.</div>';
+                return;
+            }
+            let html = `<div class="dispatch-list">`;
+            html += data.map((item, idx) => `
+                <div class="dispatch-list-row">
+                    <div class="dispatch-list-row-content">
+                        <div class="dispatch-list-row-main">
+                            <span class="date">${item.date}</span>
+                        </div>
+                        <div class="dispatch-list-row-sub">${item.route}</div>
+                        <div class="dispatch-list-row-bottom">
+                            <span class="car-number">${item.vehicleNumber}</span>
+                            <span class="cargo">${item.cargo}</span>
+                            <a href="tel:${item.contact}" class="phone-link" onclick="event.stopPropagation();">${item.contact}</a>
+                            <span class="driver-name">${item.driverName}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            html += '</div>';
+            list.innerHTML = html;
+        }
+        // DOMContentLoaded 시점에 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTodayDispatchData();
         });
     </script>
 </body>
