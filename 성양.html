@@ -363,7 +363,7 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 오늘 내역 fetch 및 표시 (Google Sheets API 사용)
+        // 오늘 내역 fetch 및 표시 (CSV 방식)
         async function fetchTodayDispatchData() {
             const debugDiv = document.getElementById('todayDispatchDebug');
             if (debugDiv) debugDiv.remove();
@@ -373,60 +373,42 @@
             document.getElementById('todayDispatchList').before(debug);
 
             try {
-                debug.innerText = '[1] API 요청 시작';
-                const response = await fetch(SHEET_URL);
-                debug.innerText += '\n[2] API 응답 상태: ' + response.status;
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                debug.innerText += '\n[3] 데이터 수신 완료';
-
-                if (!data.values || data.values.length === 0) {
-                    throw new Error('데이터가 없습니다.');
-                }
-
-                // 헤더 행 제거
-                const rows = data.values.slice(1);
-                debug.innerText += `[4] 전체 행 수: ${rows.length}\n`;
+                debug.innerText = '[1] fetch 시작';
+                const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
+                debug.innerText += '\n[2] fetch 완료, status: ' + response.status;
+                const text = await response.text();
+                debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
+                const lines = text.split('\n');
+                const rows = lines.slice(1).filter(r => r.trim().length > 0).map(row => row.split(','));
                 const today = getTodayKSTString();
-                debug.innerText += `[5] 오늘 날짜: ${today}\n`;
-                rows.forEach((row, i) => {
-                    debug.innerText += `[row${i}] 원본: "${row[0]}", typeof: ${typeof row[0]}, 전체: ${JSON.stringify(row)}\n`;
+                debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
+                debug.innerText += `\n[5] 오늘 날짜: ${today}`;
+                let matchCount = 0;
+                rows.forEach((cols, i) => {
+                    const rawDate = (cols[0] || '').trim();
+                    const company = (cols[1] || '').trim();
+                    const dateMatch = rawDate === today;
+                    const companyMatch = company === '성양로지스틱스';
+                    debug.innerText += `\n[row${i}] 날짜: "${rawDate}", 회사: "${company}" => 날짜일치: ${dateMatch}, 회사일치: ${companyMatch}`;
+                    if(dateMatch && companyMatch) matchCount++;
                 });
-
-                const todayData = rows.filter(row => {
-                    let sheetDate = '';
-                    if (!row[0]) return false;
-                    if (!isNaN(row[0]) && row[0].trim() !== '') {
-                        // 숫자(시리얼 넘버)일 때
-                        sheetDate = serialToYMD(Number(row[0]));
-                    } else {
-                        // 문자열일 때
-                        sheetDate = row[0].slice(0, 10);
-                    }
-                    return sheetDate === today && (row[1] || '').trim() === '성양로지스틱스';
-                })
-                .map(row => ({
-                    date: row[0] || '-',
-                    company: row[1] || '-',
-                    vehicleNumber: row[2] || '-',
-                    route: row[3] || '-',
-                    cargo: row[5] || '-',
-                    contact: row[8] || '-',
-                    driverName: row[11] || '-'
+                debug.innerText += `\n[6] 오늘 성양로지스틱스 데이터 수: ${matchCount}`;
+                const todayData = rows.filter(cols =>
+                    (cols[0] || '').trim() === today && (cols[1] || '').trim() === '성양로지스틱스'
+                ).map(cols => ({
+                    date: (cols[0] || '-').trim(),
+                    company: (cols[1] || '-').trim(),
+                    vehicleNumber: (cols[2] || '-').trim(),
+                    route: (cols[3] || '-').trim(),
+                    cargo: (cols[5] || '-').trim(),
+                    contact: (cols[8] || '-').trim(),
+                    driverName: (cols[11] || '-').trim()
                 }));
-
-                debug.innerText += `\n[6] 오늘 성양로지스틱스 데이터 수: ${todayData.length}`;
                 renderTodayDispatchList(todayData);
-
             } catch (error) {
                 console.error('구글 시트 데이터 가져오기 실패:', error);
-                debug.innerText += '\n[ERROR] ' + error.message;
-                document.getElementById('todayDispatchList').innerHTML = 
-                    '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
+                debug.innerText += '\n[ERROR] ' + (error.message || error);
+                document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
             }
         }
 
