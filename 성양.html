@@ -248,11 +248,17 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 어제 날짜 구하기
-        function getYesterday() {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            return yesterday.toISOString().split('T')[0];
+        // 어제 날짜 구하기 (KST 기준)
+        function getYesterdayKST() {
+            const now = new Date();
+            // 한국 시간으로 변환
+            now.setHours(now.getHours() + 9);
+            // 어제로 이동
+            now.setDate(now.getDate() - 1);
+            // 0시로 맞추기
+            now.setHours(0, 0, 0, 0);
+            // yyyy-mm-dd 포맷 반환
+            return now.toISOString().slice(0, 10);
         }
 
         // 페이지 로드 시 실행
@@ -262,7 +268,7 @@
 
         // 어제 배차 데이터 로드
         function loadYesterdayDispatch() {
-            const yesterday = getYesterday();
+            const yesterday = getYesterdayKST();
             
             db.collection("배차일보")
                 .where("company", "==", "성양로지스틱스")
