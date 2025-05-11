@@ -390,12 +390,12 @@
 
                 // 헤더 행 제거
                 const rows = data.values.slice(1);
+                debug.innerText += `[4] 전체 행 수: ${rows.length}\n`;
                 const today = getTodayKSTString();
-                let dateDebug = `[5] 오늘 날짜: ${today}\n`;
+                debug.innerText += `[5] 오늘 날짜: ${today}\n`;
                 rows.forEach((row, i) => {
-                    dateDebug += `[row${i}] 원본: "${row[0]}", typeof: ${typeof row[0]}\n`;
+                    debug.innerText += `[row${i}] 원본: "${row[0]}", typeof: ${typeof row[0]}, 전체: ${JSON.stringify(row)}\n`;
                 });
-                debug.innerText += dateDebug;
 
                 const todayData = rows.filter(row => {
                     let sheetDate = '';
