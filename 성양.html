@@ -380,22 +380,8 @@
                 debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
                 const lines = text.split('\n');
                 const rows = lines.slice(1).filter(r => r.trim().length > 0).map(row => row.split(','));
-                const today = getTodayKSTString();
                 debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
-                debug.innerText += `\n[5] 오늘 날짜: ${today}`;
-                let matchCount = 0;
-                rows.forEach((cols, i) => {
-                    const rawDate = (cols[0] || '').trim();
-                    const company = (cols[1] || '').trim();
-                    const dateMatch = rawDate === today;
-                    const companyMatch = company === '성양로지스틱스';
-                    debug.innerText += `\n[row${i}] 날짜: "${rawDate}", 회사: "${company}" => 날짜일치: ${dateMatch}, 회사일치: ${companyMatch}`;
-                    if(dateMatch && companyMatch) matchCount++;
-                });
-                debug.innerText += `\n[6] 오늘 성양로지스틱스 데이터 수: ${matchCount}`;
-                const todayData = rows.filter(cols =>
-                    (cols[0] || '').trim() === today && (cols[1] || '').trim() === '성양로지스틱스'
-                ).map(cols => ({
+                const todayData = rows.map(cols => ({
                     date: (cols[0] || '-').trim(),
                     company: (cols[1] || '-').trim(),
                     vehicleNumber: (cols[2] || '-').trim(),
