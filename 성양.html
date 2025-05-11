@@ -249,22 +249,19 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 어제 날짜 구하기 (KST 기준, yyyy-mm-dd 문자열)
+        // 어제 날짜 구하기 (브라우저 로컬 기준, yyyy-mm-dd 문자열)
         function getYesterdayKSTString() {
             const now = new Date();
-            now.setHours(now.getHours() + 9);
             now.setDate(now.getDate() - 1);
-            now.setHours(0, 0, 0, 0);
             const yyyy = now.getFullYear();
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const dd = String(now.getDate()).padStart(2, '0');
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 오늘 날짜(yyyy-mm-dd)
+        // 오늘 날짜(브라우저 로컬 기준, yyyy-mm-dd)
         function getTodayKSTString() {
             const now = new Date();
-            now.setHours(now.getHours() + 9);
             const yyyy = now.getFullYear();
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const dd = String(now.getDate()).padStart(2, '0');
