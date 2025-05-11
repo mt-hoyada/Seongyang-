@@ -223,6 +223,7 @@
         <div id="dispatchList" class="dispatch-list"></div>
         <h2 style="margin-top:32px; font-size:20px; color:#388e3c;">오늘 배차 내역</h2>
         <div id="todayDispatchList" class="dispatch-list"></div>
+        <div id="sheetAColumnList" style="margin-top:32px;"></div>
         <div id="modalBg" style="display:none;"></div>
     </div>
 
@@ -337,99 +338,41 @@
             document.getElementById('modalBg').style.display = 'none';
         }
 
-        // ====== 오늘 내역(구글 시트) ======
+        // ====== 배차일보 A열 값 전체 출력 ======
         const SHEET_ID = '1CrKQ-Baj4rnL8eYuehLLBuFS9Orsm5qlicd9Nq-kxjU';
         const SHEET_NAME = '배차일보';
-        const API_KEY = 'AIzaSyDVQ0f9j3QppYWjULePPA0lDhNCb5sMfpI'; // Google Cloud Console에서 발급받은 API 키
-        const SHEET_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
-
-        // 오늘 내역 fetch 및 표시 (조건 없이 전체 행)
-        async function fetchTodayDispatchData() {
-            const debugDiv = document.getElementById('todayDispatchDebug');
-            if (debugDiv) debugDiv.remove();
-            const debug = document.createElement('div');
-            debug.id = 'todayDispatchDebug';
-            debug.style = 'color:#888; font-size:13px; margin:10px 0; white-space:pre-wrap;';
-            document.getElementById('todayDispatchList').before(debug);
-
+        
+        // A열 값 불러오기 및 출력
+        async function fetchSheetAColumnData() {
+            const listDiv = document.getElementById('sheetAColumnList');
+            listDiv.innerHTML = '<div style="color:#888;">불러오는 중...</div>';
             try {
-                debug.innerText = '[1] fetch 시작';
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
-                debug.innerText += '\n[2] fetch 완료, status: ' + response.status;
+                if (!response.ok) throw new Error('시트 데이터를 불러오지 못했습니다.');
                 const text = await response.text();
-                debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
                 const lines = text.split('\n');
                 const rows = lines.slice(1).filter(r => r.trim().length > 0).map(row => row.split(','));
-                debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
-                const todayData = rows.map(cols => ({
-                    date: (cols[0] || '-').trim(),
-                    company: (cols[1] || '-').trim(),
-                    vehicleNumber: (cols[2] || '-').trim(),
-                    route: (cols[3] || '-').trim(),
-                    cargo: (cols[5] || '-').trim(),
-                    contact: (cols[8] || '-').trim(),
-                    driverName: (cols[11] || '-').trim()
-                }));
-                debug.innerText += `\n[5] todayData 갯수: ${todayData.length}`;
-                renderTodayDispatchList(todayData);
-            } catch (error) {
-                console.error('구글 시트 데이터 가져오기 실패:', error);
-                debug.innerText += '\n[ERROR] ' + (error.message || error);
-                document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
+                const aColValues = rows.map(cols => (cols[0] || '').trim());
+                renderAColumnList(aColValues);
+            } catch (e) {
+                listDiv.innerHTML = '<div style="color:#c00;">시트 데이터를 불러오지 못했습니다.</div>';
             }
         }
-
-        function renderTodayDispatchList(data) {
-            const list = document.getElementById('todayDispatchList');
-            if (!data || data.length === 0) {
-                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역이 없습니다.</div>';
+        function renderAColumnList(values) {
+            const listDiv = document.getElementById('sheetAColumnList');
+            if (!values || values.length === 0) {
+                listDiv.innerHTML = '<div style="color:#888;">A열 데이터가 없습니다.</div>';
                 return;
             }
-            let html = `<div class="dispatch-list">`;
-            html += data.map((item, idx) => `
-                <div class="dispatch-list-row">
-                    <div class="dispatch-list-row-content">
-                        <div class="dispatch-list-row-main">
-                            <span class="date">${item.date}</span>
-                        </div>
-                        <div class="dispatch-list-row-sub">${item.route}</div>
-                        <div class="dispatch-list-row-bottom">
-                            <span class="car-number">${item.vehicleNumber}</span>
-                            <span class="cargo">${item.cargo}</span>
-                            <a href="tel:${item.contact}" class="phone-link" onclick="event.stopPropagation();">${item.contact}</a>
-                            <span class="driver-name">${item.driverName}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            html += '</div>';
-            list.innerHTML = html;
+            let html = '<ul style="padding-left:20px;">';
+            html += values.map(v => `<li>${v}</li>`).join('');
+            html += '</ul>';
+            listDiv.innerHTML = html;
         }
-
-        function showTodayDetailModal(idx) {
-            const data = window._todayDispatchData[idx];
-            const modalBg = document.getElementById('modalBg');
-            modalBg.innerHTML = `
-                <div class="modal-bg" onclick="closeModal()">
-                    <div class="modal-box" onclick="event.stopPropagation();">
-                        <button class="modal-close" onclick="closeModal()">&times;</button>
-                        <div class="modal-title">배차 상세 내역</div>
-                        <div class="modal-row"><span class="modal-label">거래처상호</span><span class="modal-value">${data.company}</span></div>
-                        <div class="modal-row"><span class="modal-label">날짜</span><span class="modal-value">${data.date}</span></div>
-                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber}</span></div>
-                        <div class="modal-row"><span class="modal-label">운행구간</span><span class="modal-value">${data.route}</span></div>
-                        <div class="modal-row"><span class="modal-label">차종</span><span class="modal-value">${data.cargo}</span></div>
-                        <div class="modal-row"><span class="modal-label">연락처</span><span class="modal-value"><a href="tel:${data.contact}" class="phone-link">${data.contact}</a></span></div>
-                        <div class="modal-row"><span class="modal-label">이름</span><span class="modal-value">${data.driverName}</span></div>
-                    </div>
-                </div>
-            `;
-            modalBg.style.display = '';
-        }
-
-        // 5분마다 오늘 내역 갱신
-        fetchTodayDispatchData();
-        setInterval(fetchTodayDispatchData, 5 * 60 * 1000);
+        // DOMContentLoaded 시점에 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchSheetAColumnData();
+        });
     </script>
 </body>
 </html>
