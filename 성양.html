@@ -214,6 +214,7 @@
 <body>
     <div class="container">
         <h1>성양로지스틱스 배차 목록</h1>
+        <div id="debugDate" style="color:#888; font-size:14px; margin-bottom:10px;"></div>
         <div id="dispatchList" class="dispatch-list"></div>
         <div id="modalBg" style="display:none;"></div>
     </div>
@@ -260,8 +261,22 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        // 오늘 날짜(yyyy-mm-dd)
+        function getTodayKSTString() {
+            const now = new Date();
+            now.setHours(now.getHours() + 9);
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', function() {
+            // 디버깅용 날짜 표시
+            const today = getTodayKSTString();
+            const yesterday = getYesterdayKSTString();
+            document.getElementById('debugDate').innerText = `오늘: ${today} / 어제(쿼리): ${yesterday}`;
             loadYesterdayDispatch();
         });
 
