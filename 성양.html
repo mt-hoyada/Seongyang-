@@ -357,17 +357,25 @@
                 debug.innerText += '\n[2] fetch 완료, status: ' + response.status;
                 const text = await response.text();
                 debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
-                const lines = text.split('\n');
-                const rows = lines.slice(1).filter(r => r.trim().length > 0).map(row => row.split(','));
+                
+                // PapaParse를 사용하여 CSV 파싱
+                const parsedData = Papa.parse(text, {
+                    header: false,
+                    skipEmptyLines: true
+                });
+                
+                const rows = parsedData.data.slice(1); // 헤더 제외
                 debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
+                
                 const todayData = rows.map(cols => ({
-                    date: (cols[0] || '-').trim(),           // A열
-                    route: (cols[3] || '-').trim(),          // D열
-                    vehicleNumber: (cols[2] || '-').trim(),  // C열
-                    cargo: (cols[5] || '-').trim(),          // F열
-                    contact: (cols[8] || '-').trim(),        // I열
-                    driverName: (cols[11] || '-').trim()     // L열
+                    date: cols[0] ? cols[0].trim() : '-',
+                    route: cols[3] ? cols[3].trim() : '-',
+                    vehicleNumber: cols[2] ? cols[2].trim() : '-',
+                    cargo: cols[5] ? cols[5].trim() : '-',
+                    contact: cols[8] ? cols[8].trim() : '-',
+                    driverName: cols[11] ? cols[11].trim() : '-'
                 }));
+                
                 debug.innerText += `\n[5] todayData 갯수: ${todayData.length}`;
                 renderTodayDispatchList(todayData);
             } catch (error) {
