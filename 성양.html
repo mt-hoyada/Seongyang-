@@ -363,7 +363,10 @@
                 debug.innerText += '\n[2] fetch 완료, status: ' + res.status;
                 const text = await res.text();
                 debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
-                const rows = text.split('\n').map(row => row.split(','));
+                // 셀의 앞뒤 큰따옴표 제거하여 파싱
+                const rows = text.split('\n').map(row =>
+                  row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim())
+                );
                 debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
                 // 첫 행은 헤더, 2행부터 데이터
                 const dataRows = rows.slice(1).filter(r => r.length > 1);
