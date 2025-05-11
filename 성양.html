@@ -3,7 +3,7 @@
 <head>
     <title>성양로지스틱스 배차 목록</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#43a047">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,119 +24,75 @@
         * {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
-            -webkit-user-select: none;
             user-select: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            margin: 0;
-            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: #f5f5f5;
-            overscroll-behavior-y: contain;
-        }
-        
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 16px;
-            background-color: white;
-        }
-        
-        h1 {
             color: #333;
-            text-align: center;
-            margin: 0;
-            padding: 16px 0;
-            font-size: 24px;
-            background: #fff;
+            line-height: 1.4;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .header {
+            background: #43a047;
+            color: white;
+            padding: 16px;
             position: sticky;
             top: 0;
             z-index: 100;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            padding: 16px;
+            font-size: 16px;
+            color: #666;
+            background: #fff;
             border-bottom: 1px solid #eee;
         }
         
-        h2 {
-            margin: 24px 0 16px 0;
-            padding: 0 16px;
-            font-size: 18px;
-            color: #388e3c;
-        }
-        
-        .dispatch-list-row {
-            margin: 0 16px;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        .dispatch-card {
+            background: white;
+            margin: 8px;
+            border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        .dispatch-list-row:active {
-            background: #f5f5f5;
+        .dispatch-date {
+            color: #43a047;
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
         }
         
-        .modal-bg {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-        }
-        
-        .modal-box {
-            background: #fff;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 400px;
-            padding: 24px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 32px;
-            height: 32px;
-            border-radius: 16px;
-            background: rgba(0,0,0,0.1);
-            color: #666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .modal-row {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .modal-label {
-            width: 100px;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .modal-value {
-            flex: 1;
-            font-weight: 500;
+        .dispatch-route {
             font-size: 16px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .dispatch-info {
+            display: flex;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            flex-wrap: wrap;
+        }
+        
+        .dispatch-info span {
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
         }
         
         .phone-link {
@@ -147,28 +103,104 @@
             border-radius: 4px;
         }
         
-        .phone-link:active {
-            background: rgba(33,150,243,0.1);
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        
+        .modal-label {
+            width: 80px;
+            color: #666;
+        }
+        
+        .modal-value {
+            flex: 1;
+            font-weight: 500;
         }
         
         @media (display-mode: standalone) {
             body {
                 padding-top: env(safe-area-inset-top);
                 padding-bottom: env(safe-area-inset-bottom);
-                padding-left: env(safe-area-inset-left);
-                padding-right: env(safe-area-inset-right);
+            }
+            
+            .header {
+                padding-top: max(16px, env(safe-area-inset-top));
+            }
+            
+            .modal-content {
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>성우로지스 배차 목록</h1>
-        <h2 style="margin-top:20px; font-size:20px; color:#388e3c;">오늘 배차 내역</h2>
-        <div id="todayDispatchList" class="dispatch-list"></div>
-        <h2 style="margin-top:32px; font-size:20px; color:#388e3c;">최근 5일 배차 내역</h2>
-        <div id="dispatchList" class="dispatch-list"></div>
-        <div id="modalBg" style="display:none;"></div>
+    <div class="header">성양로지스틱스 배차 목록</div>
+    
+    <div class="section-title">오늘 배차 내역</div>
+    <div id="todayDispatchList"></div>
+    
+    <div class="section-title">최근 5일 배차 내역</div>
+    <div id="dispatchList"></div>
+    
+    <div id="modalBg" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">배차 상세 내역</div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modalContent"></div>
+        </div>
     </div>
 
     <script>
@@ -227,7 +259,7 @@
                     .get();
                 const dispatchData = snapshot.docs.map(doc => doc.data());
                 const filtered = dispatchData.filter(item => item.company === '성양로지스틱스');
-                renderDispatchList(filtered);
+                renderDispatchList(filtered, 'dispatchList');
             } catch (error) {
                 console.error("최근 5일 데이터 가져오기 실패:", error);
                 document.getElementById('dispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">최근 5일 배차 내역을 불러오지 못했습니다.</div>';
@@ -308,75 +340,120 @@
 
         function showTodayDetailModal(idx) {
             const data = window._todayDispatchData[idx];
-            const modalBg = document.getElementById('modalBg');
-            modalBg.innerHTML = `
-                <div class="modal-bg" onclick="closeModal()">
-                    <div class="modal-box" onclick="event.stopPropagation();">
-                        <button class="modal-close" onclick="closeModal()">&times;</button>
-                        <div class="modal-title">배차 상세 내역</div>
-                        <div class="modal-row"><span class="modal-label">거래처상호</span><span class="modal-value">${data.company || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">날짜</span><span class="modal-value">${data.date || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">운행구간</span><span class="modal-value">${data.route || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">차종</span><span class="modal-value">${data.cargo || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">연락처</span><span class="modal-value"><a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a></span></div>
-                        <div class="modal-row"><span class="modal-label">이름</span><span class="modal-value">${data.driverName || ''}</span></div>
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="modal-row">
+                    <div class="modal-label">거래처</div>
+                    <div class="modal-value">${data.company || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">날짜</div>
+                    <div class="modal-value">${data.date || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">차량번호</div>
+                    <div class="modal-value">${data.vehicleNumber || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">운행구간</div>
+                    <div class="modal-value">${data.route || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">차종</div>
+                    <div class="modal-value">${data.cargo || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">연락처</div>
+                    <div class="modal-value">
+                        <a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a>
                     </div>
                 </div>
+                <div class="modal-row">
+                    <div class="modal-label">이름</div>
+                    <div class="modal-value">${data.driverName || ''}</div>
+                </div>
             `;
-            modalBg.style.display = '';
+            
+            const modal = document.getElementById('modalBg');
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function closeModal() {
-            document.getElementById('modalBg').style.display = 'none';
+            const modal = document.getElementById('modalBg');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
         }
 
-        function renderDispatchList(dispatchData) {
-            const list = document.getElementById('dispatchList');
-            if (dispatchData.length === 0) {
-                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">데이터를 가져오는데 실패했습니다.</div>';
+        // 모달 외부 클릭시 닫기
+        document.getElementById('modalBg').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        function renderDispatchList(data, targetId) {
+            const list = document.getElementById(targetId);
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div style="padding:16px; text-align:center; color:#666;">배차 내역이 없습니다.</div>';
                 return;
             }
-            let html = `<div class="dispatch-list">`;
-            html += dispatchData.map((item, idx) => `
-                <div class="dispatch-list-row" onclick="showDetailModal(${idx})">
-                    <div class="dispatch-list-row-content">
-                        <div class="dispatch-list-row-main">
-                            <span class="date">${item.date || ''}</span>
-                        </div>
-                        <div class="dispatch-list-row-sub">${item.route || ''}</div>
-                        <div class="dispatch-list-row-bottom">
-                            <span class="car-number">${item.vehicleNumber || item.carNumber || item['차량번호'] || ''}</span>
-                            <span class="cargo">${item.cargo || ''}</span>
-                            <a href="tel:${item.contact || ''}" class="phone-link" onclick="event.stopPropagation();">${item.contact || ''}</a>
-                        </div>
+            
+            list.innerHTML = data.map((item, idx) => `
+                <div class="dispatch-card" onclick="showDetailModal(${idx})">
+                    <div class="dispatch-date">${item.date || ''}</div>
+                    <div class="dispatch-route">${item.route || ''}</div>
+                    <div class="dispatch-info">
+                        <span>${item.vehicleNumber || ''}</span>
+                        <span>${item.cargo || ''}</span>
+                        <a href="tel:${item.contact || ''}" class="phone-link" onclick="event.stopPropagation()">${item.contact || ''}</a>
+                        <span>${item.driverName || ''}</span>
                     </div>
                 </div>
             `).join('');
-            html += '</div>';
-            list.innerHTML = html;
-            window._dispatchData = dispatchData;
+            
+            window._dispatchData = data;
         }
 
         function showDetailModal(idx) {
             const data = window._dispatchData[idx];
-            const modalBg = document.getElementById('modalBg');
-            modalBg.innerHTML = `
-                <div class="modal-bg" onclick="closeModal()">
-                    <div class="modal-box" onclick="event.stopPropagation();">
-                        <button class="modal-close" onclick="closeModal()">&times;</button>
-                        <div class="modal-title">배차 상세 내역</div>
-                        <div class="modal-row"><span class="modal-label">거래처상호</span><span class="modal-value">${data.company || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">날짜</span><span class="modal-value">${data.date || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">차량번호</span><span class="modal-value">${data.vehicleNumber || data.carNumber || data['차량번호'] || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">운행구간</span><span class="modal-value">${data.route || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">차종</span><span class="modal-value">${data.cargo || ''}</span></div>
-                        <div class="modal-row"><span class="modal-label">연락처</span><span class="modal-value"><a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a></span></div>
-                        <div class="modal-row"><span class="modal-label">이름</span><span class="modal-value">${data.driverName || ''}</span></div>
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="modal-row">
+                    <div class="modal-label">거래처</div>
+                    <div class="modal-value">${data.company || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">날짜</div>
+                    <div class="modal-value">${data.date || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">차량번호</div>
+                    <div class="modal-value">${data.vehicleNumber || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">운행구간</div>
+                    <div class="modal-value">${data.route || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">차종</div>
+                    <div class="modal-value">${data.cargo || ''}</div>
+                </div>
+                <div class="modal-row">
+                    <div class="modal-label">연락처</div>
+                    <div class="modal-value">
+                        <a href="tel:${data.contact || ''}" class="phone-link">${data.contact || ''}</a>
                     </div>
                 </div>
+                <div class="modal-row">
+                    <div class="modal-label">이름</div>
+                    <div class="modal-value">${data.driverName || ''}</div>
+                </div>
             `;
-            modalBg.style.display = '';
+            
+            const modal = document.getElementById('modalBg');
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
     </script>
 </body>
