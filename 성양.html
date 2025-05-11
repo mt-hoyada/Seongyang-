@@ -365,15 +365,15 @@
                 debug.innerText += '\n[2] fetch 완료, status: ' + res.status;
                 const text = await res.text();
                 debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
-                // PapaParse로 header 없이 파싱 후 A~L열(0~11)까지만 사용
-                const parsed = Papa.parse(text, {header: false});
-                const rows = parsed.data.slice(1) // 첫 행은 헤더
-                    .filter(r => r.length > 1)
-                    .map(cols => cols.slice(0, 12)); // A~L열만 추출
+                // CSV를 줄 단위로 읽고, 각 행을 쉼표로 split하여 0~11번 인덱스까지만 사용
+                const lines = text.split('\n');
+                const rows = lines.slice(1) // 첫 행은 헤더
+                    .filter(r => r.trim().length > 0)
+                    .map(row => row.split(',').slice(0, 12));
                 const today = getTodayKSTString();
                 let dateDebug = `[5] 오늘 날짜: ${today}\n`;
                 rows.slice(0, 10).forEach((cols, i) => {
-                    dateDebug += `[row${i}] 날짜: "${cols[0]}", 거래처상호: "${cols[1]}" | 전체: ${JSON.stringify(cols)}\n`;
+                    dateDebug += `[row${i}] 날짜: "${cols[0]}" | 전체: ${JSON.stringify(cols)}\n`;
                 });
                 debug.innerText += dateDebug;
                 const todayData = rows.filter(cols =>
