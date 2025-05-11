@@ -382,12 +382,12 @@
         function renderTodayDispatchList(data) {
             const list = document.getElementById('todayDispatchList');
             if (!data || data.length === 0) {
-                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 성양로지스틱스 배차 내역이 없습니다.</div>';
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역이 없습니다.</div>';
                 return;
             }
             let html = `<div class="dispatch-list">`;
             html += data.map((item, idx) => `
-                <div class="dispatch-list-row" onclick="showTodayDetailModal(${idx})">
+                <div class="dispatch-list-row">
                     <div class="dispatch-list-row-content">
                         <div class="dispatch-list-row-main">
                             <span class="date">${item.date}</span>
@@ -404,7 +404,6 @@
             `).join('');
             html += '</div>';
             list.innerHTML = html;
-            window._todayDispatchData = data;
         }
 
         function showTodayDetailModal(idx) {
