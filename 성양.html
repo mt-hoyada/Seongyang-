@@ -341,22 +341,20 @@
         const SHEET_ID = '1CrKQ-Baj4rnL8eYuehLLBuFS9Orsm5qlicd9Nq-kxjU';
         const SHEET_NAME = '배차일보';
 
-        // ====== 오늘 내역(구글 시트, 조건 없이 전체 행) ======
-        // (SHEET_ID, SHEET_NAME 재선언 제거)
-        // 오늘 내역 fetch 및 표시 (조건 없이 전체 행)
+        // 오늘 날짜 구하기 (yyyy-mm-dd)
+        function getTodayKSTString() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // 오늘 내역 fetch 및 표시
         async function fetchTodayDispatchData() {
-            const debugDiv = document.getElementById('todayDispatchDebug');
-            if (debugDiv) debugDiv.remove();
-            const debug = document.createElement('div');
-            debug.id = 'todayDispatchDebug';
-            debug.style = 'color:#888; font-size:13px; margin:10px 0; white-space:pre-wrap;';
-            document.getElementById('todayDispatchList').before(debug);
             try {
-                debug.innerText = '[1] fetch 시작';
                 const response = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
-                debug.innerText += '\n[2] fetch 완료, status: ' + response.status;
                 const text = await response.text();
-                debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
                 
                 // PapaParse를 사용하여 CSV 파싱
                 const parsedData = Papa.parse(text, {
@@ -365,22 +363,22 @@
                 });
                 
                 const rows = parsedData.data.slice(1); // 헤더 제외
-                debug.innerText += `\n[4] 전체 행 수: ${rows.length}`;
+                const today = getTodayKSTString();
                 
-                const todayData = rows.map(cols => ({
-                    date: cols[0] ? cols[0].trim() : '-',
-                    route: cols[3] ? cols[3].trim() : '-',
-                    vehicleNumber: cols[2] ? cols[2].trim() : '-',
-                    cargo: cols[5] ? cols[5].trim() : '-',
-                    contact: cols[8] ? cols[8].trim() : '-',
-                    driverName: cols[11] ? cols[11].trim() : '-'
-                }));
+                const todayData = rows
+                    .filter(cols => cols[0] && cols[0].trim() === today) // 오늘 날짜 데이터만 필터링
+                    .map(cols => ({
+                        date: cols[0] ? cols[0].trim() : '-',
+                        route: cols[3] ? cols[3].trim() : '-',
+                        vehicleNumber: cols[2] ? cols[2].trim() : '-',
+                        cargo: cols[5] ? cols[5].trim() : '-',
+                        contact: cols[8] ? cols[8].trim() : '-',
+                        driverName: cols[11] ? cols[11].trim() : '-'
+                    }));
                 
-                debug.innerText += `\n[5] todayData 갯수: ${todayData.length}`;
                 renderTodayDispatchList(todayData);
             } catch (error) {
                 console.error('구글 시트 데이터 가져오기 실패:', error);
-                debug.innerText += '\n[ERROR] ' + (error.message || error);
                 document.getElementById('todayDispatchList').innerHTML = '<div style="padding:20px; text-align:center; color:#888;">오늘 배차 내역을 불러오지 못했습니다.</div>';
             }
         }
