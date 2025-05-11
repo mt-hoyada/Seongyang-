@@ -365,26 +365,27 @@
                 debug.innerText += '\n[2] fetch 완료, status: ' + res.status;
                 const text = await res.text();
                 debug.innerText += '\n[3] 원본 CSV 일부: ' + text.slice(0, 200);
-                // PapaParse로 파싱
-                const parsed = Papa.parse(text, {header: true});
-                debug.innerText += `\n[4] PapaParse rows: ${parsed.data.length}`;
+                // PapaParse로 header 없이 파싱 후 A~L열(0~11)까지만 사용
+                const parsed = Papa.parse(text, {header: false});
+                const rows = parsed.data.slice(1) // 첫 행은 헤더
+                    .filter(r => r.length > 1)
+                    .map(cols => cols.slice(0, 12)); // A~L열만 추출
                 const today = getTodayKSTString();
                 let dateDebug = `[5] 오늘 날짜: ${today}\n`;
-                parsed.data.slice(0, 10).forEach((row, i) => {
-                    dateDebug += `[row${i}] row['날짜']: "${row['날짜']}" | 전체: ${JSON.stringify(row)}\n`;
+                rows.slice(0, 10).forEach((cols, i) => {
+                    dateDebug += `[row${i}] 날짜: "${cols[0]}", 거래처상호: "${cols[1]}" | 전체: ${JSON.stringify(cols)}\n`;
                 });
                 debug.innerText += dateDebug;
-                // 날짜 비교를 startsWith로 완화
-                const todayData = parsed.data.filter(row =>
-                    (row['날짜'] || '').trim().startsWith(today) && (row['거래처상호'] || '').trim() === '성양로지스틱스'
-                ).map(row => ({
-                    date: (row['날짜'] || '-').trim(),
-                    company: (row['거래처상호'] || '-').trim(),
-                    vehicleNumber: (row['차량번호'] || '-').trim(),
-                    route: (row['운송구간'] || '-').trim(),
-                    cargo: (row['차종'] || '-').trim(),
-                    contact: (row['연락처'] || '-').trim(),
-                    driverName: (row['이름'] || '-').trim()
+                const todayData = rows.filter(cols =>
+                    (cols[0] || '').trim().startsWith(today) && (cols[1] || '').trim() === '성양로지스틱스'
+                ).map(cols => ({
+                    date: (cols[0] || '-').trim(),
+                    company: (cols[1] || '-').trim(),
+                    vehicleNumber: (cols[2] || '-').trim(),
+                    route: (cols[3] || '-').trim(),
+                    cargo: (cols[5] || '-').trim(),
+                    contact: (cols[8] || '-').trim(),
+                    driverName: (cols[11] || '-').trim()
                 }));
                 debug.innerText += `\n[6] 오늘 성양로지스틱스 데이터 수: ${todayData.length}`;
                 renderTodayDispatchList(todayData);
