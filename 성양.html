@@ -214,7 +214,6 @@
 <body>
     <div class="container">
         <h1>성양로지스틱스 배차 목록</h1>
-        <div id="debugDate" style="color:#888; font-size:14px; margin-bottom:10px;"></div>
         <div id="dispatchList" class="dispatch-list"></div>
         <div id="modalBg" style="display:none;"></div>
     </div>
@@ -268,38 +267,39 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // 페이지 로드 시 실행
-        document.addEventListener('DOMContentLoaded', function() {
-            // 디버깅용 날짜 표시
-            const today = getTodayKSTString();
-            const yesterday = getYesterdayKSTString();
-            document.getElementById('debugDate').innerText = `오늘: ${today} / 어제(쿼리): ${yesterday}`;
-            loadYesterdayDispatch();
-        });
-
-        // 어제 배차 데이터 로드
+        // 어제 배차 데이터 로드 (date만 where, company는 프론트에서 필터)
         function loadYesterdayDispatch() {
             const yesterday = getYesterdayKSTString();
-            
             db.collection("배차일보")
-                .where("company", "==", "성양로지스틱스")
-                .where("date", "==", yesterday)
-                .orderBy("date", "desc")
-                .onSnapshot((snapshot) => {
-                    const dispatchList = document.getElementById('dispatchList');
-                    dispatchList.innerHTML = '';
+              .where("date", "==", yesterday)
+              .onSnapshot((snapshot) => {
+                  const dispatchList = document.getElementById('dispatchList');
+                  dispatchList.innerHTML = '';
 
-                    if (snapshot.empty) {
-                        dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 배차 내역이 없습니다.</div>';
-                        return;
-                    }
+                  if (snapshot.empty) {
+                      dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 배차 내역이 없습니다.</div>';
+                      return;
+                  }
 
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const dispatchItem = createDispatchItem(data);
-                        dispatchList.appendChild(dispatchItem);
-                    });
-                });
+                  // company가 '성양로지스틱스'인 데이터만 필터링
+                  const filtered = [];
+                  snapshot.forEach((doc) => {
+                      const data = doc.data();
+                      if (data.company === "성양로지스틱스") {
+                          filtered.push(data);
+                      }
+                  });
+
+                  if (filtered.length === 0) {
+                      dispatchList.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">어제 성양로지스틱스 배차 내역이 없습니다.</div>';
+                      return;
+                  }
+
+                  filtered.forEach((data) => {
+                      const dispatchItem = createDispatchItem(data);
+                      dispatchList.appendChild(dispatchItem);
+                  });
+              });
         }
 
         // 배차 항목 생성
