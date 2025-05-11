@@ -369,9 +369,14 @@
                 const parsed = Papa.parse(text, {header: true});
                 debug.innerText += `\n[4] PapaParse rows: ${parsed.data.length}`;
                 const today = getTodayKSTString();
-                debug.innerText += `\n[5] 오늘 날짜: ${today}`;
+                let dateDebug = `[5] 오늘 날짜: ${today}\n`;
+                parsed.data.forEach((row, i) => {
+                    dateDebug += `[row${i}] row['날짜']: "${row['날짜']}"\n`;
+                });
+                debug.innerText += dateDebug;
+                // 날짜 비교를 startsWith로 완화
                 const todayData = parsed.data.filter(row =>
-                    (row['날짜'] || '').trim() === today && (row['거래처상호'] || '').trim() === '성양로지스틱스'
+                    (row['날짜'] || '').trim().startsWith(today) && (row['거래처상호'] || '').trim() === '성양로지스틱스'
                 ).map(row => ({
                     date: (row['날짜'] || '-').trim(),
                     company: (row['거래처상호'] || '-').trim(),
