@@ -359,24 +359,31 @@
         // 오늘 내역 fetch 및 표시
         async function fetchTodayDispatchData() {
             try {
+                console.log('시트 ID:', SHEET_ID);
+                console.log('시트 이름:', SHEET_NAME);
+                
                 const response = await fetchWithNoCache(
                     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`
                 );
                 const text = await response.text();
+                console.log('받아온 CSV 데이터:', text.substring(0, 200) + '...'); // 처음 200자만 출력
                 
                 // PapaParse를 사용하여 CSV 파싱
                 const parsedData = Papa.parse(text, {
                     header: false,
                     skipEmptyLines: true
                 });
+                console.log('파싱된 데이터 행 수:', parsedData.data.length);
                 
                 const rows = parsedData.data.slice(1); // 헤더 제외
                 const today = getTodayKSTString();
+                console.log('오늘 날짜:', today);
                 
                 const todayData = rows
                     .filter(cols => {
                         const date = cols[0] ? cols[0].trim() : '';
                         const company = cols[1] ? cols[1].trim() : '';
+                        console.log('검사 중인 행:', { date, company });
                         return date === today && company.includes('성양로지스틱스');
                     })
                     .map(cols => ({
@@ -389,6 +396,7 @@
                         driverName: cols[11] ? cols[11].trim() : '-'
                     }));
                 
+                console.log('필터링된 오늘 데이터:', todayData);
                 renderTodayDispatchList(todayData);
                 window._todayDispatchData = todayData; // 모달에서 사용하기 위해 데이터 저장
             } catch (error) {
