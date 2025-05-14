@@ -379,22 +379,24 @@
                 const today = getTodayKSTString();
                 console.log('오늘 날짜:', today);
                 
-                const todayData = rows
-                    .filter(cols => {
-                        const date = cols[0] ? cols[0].trim() : '';
-                        const company = cols[1] ? cols[1].trim() : '';
-                        console.log('검사 중인 행:', { date, company });
-                        return date === today && company.includes('성양로지스틱스');
-                    })
-                    .map(cols => ({
-                        date: cols[0] ? cols[0].trim() : '-',
-                        company: cols[1] ? cols[1].trim() : '-',
-                        route: cols[3] ? cols[3].trim() : '-',
-                        vehicleNumber: cols[2] ? cols[2].trim() : '-',
-                        cargo: cols[5] ? cols[5].trim() : '-',
-                        contact: cols[8] ? cols[8].trim() : '-',
-                        driverName: cols[11] ? cols[11].trim() : '-'
-                    }));
+               const todayData = rows
+    .filter(cols => {
+        const date = cols[0] ? cols[0].trim() : ''; // 날짜 열
+        const company = cols[1] ? cols[1].trim().replace(/\s+/g, '') : ''; // 거래처 이름 열
+        console.log('검사 중인 행:', { date, company });
+        
+        // 날짜 비교 로직
+        return date === getTodayKSTString() && company.includes('성양로지스틱스'.replace(/\s+/g, ''));
+    })
+    .map(cols => ({
+        date: cols[0] ? cols[0].trim() : '-',
+        company: cols[1] ? cols[1].trim() : '-',
+        route: cols[3] ? cols[3].trim() : '-',
+        vehicleNumber: cols[2] ? cols[2].trim() : '-',
+        cargo: cols[5] ? cols[5].trim() : '-',
+        contact: cols[8] ? cols[8].trim() : '-',
+        driverName: cols[11] ? cols[11].trim() : '-'
+    }));
                 
                 console.log('필터링된 오늘 데이터:', todayData);
                 renderTodayDispatchList(todayData);
